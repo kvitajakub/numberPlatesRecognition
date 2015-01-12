@@ -1,0 +1,75 @@
+
+DETEKCE DOPRAVNI ZNACKY V OBRAZE
+================================
+
+Tato slozka obsahuje soubory pro pripravu dat a souboru pro trenovani kaskadou.
+
+
+Aplikace:
+=========
+
+training---find-LP -d <image-list> -w <max-size-LP> -p <range-around-LP>" 
+    
+    -d <image-list>        v parametru se vklada seznam cest k obrazkum urcenych pro detekci
+    -w <max-size-LP>       udej pomer, kolik sirky obrazku maximalne zabira nejvetsi mozna SPZ,
+                           musi byt v intervalu <0,1>
+    -p <range-around-LP>   hodnota vysky SPZ v procentech, jak velky okraj se ma k nadetekovane
+                           SPZ pridat
+
+    Vystupem aplikace je slozka LP-dataset, ve ktere jsou ulozeny nadetekovane SPZ, a soubor 
+    LP-list.dat, ktery obsahuje seznam souboru ve slozce LP-dataset. Vse je ulozeno do slozky s 
+    puvodnim datasetem.
+
+
+
+NYNI JE NUTNE PROJIT SLOZKU LP-dataset A RUCNE SMAZAT VSE, CO BYLO NADETEKOVANO SPATNE.
+
+
+
+training---prepare-data -d <LP-list>
+
+    -d <LP-list>          parametr obsahuje odkaz na soubor vytvoreny predchozi aplikaci
+
+    Vystupem jsou soubory a slozky:
+    positive-dataset      adresar obsahujici originalni obrazky, ktere obsahuji aspon jednu SPZ
+    negative-dataset      adresar obsahujici originalni obrazky, ktere maji zacernene SPZ
+    pos-list.dat          soubor obsahujici seznam obrazku s SPZ a jejich pozicemi, kde se znacka 
+                          nachazi
+    neg-list.dat          soubor obsahujici seznam obrazku, ktere neobsahuji SPZ
+
+
+
+NYNI JE NUTNE PROJIT ADRESAR negative-dataset A RUCNE PREBARVIT NACERNO VSECHNY SPZ, KTERE ZUSTALY
+NEZACERNENY.
+
+
+
+--->> TAK PRAVE TADY NA TOMTO MISTE MUZEME KONECNE ZACIT TRENOVAT POMOCI FUNKCI OPENCV:
+    
+    opencv_createsamples
+    --------------------
+    ./opencv_createsamples -info /home/terka/FIT/DP-DATA/dataset_for_training/pos-list.dat  
+                           -vec /home/terka/FIT/DP-DATA/dataset_for_testing/samples.vec 
+                           -w 45 -h 11 -num 2000
+
+    opencv_traincascade
+    -------------------
+    ./opencv_traincascade -data /home/terka/FIT/DP-DATA/dataset_for_training/classifierLBP/ 
+                          -vec /home/terka/FIT/DP-DATA/dataset_for_training/samples.vec 
+                          -bg /home/terka/FIT/DP-DATA/dataset_for_training/neg-list.dat 
+                          -numPos 755 -numNeg 976 
+                          -nstages 20 -w 45 -h 11
+                          -featureType LBP  
+
+
+
+detection -i <src-img> -l <list-of-images> -d <detector> 
+
+    -i <src-img>          obrazek
+    -l <list-of-images>   seznam obsahujici cesty k obrazkum
+    -d <detector>         detektor (cascade.xml)
+
+    Vystupem je obrazek zobrazeny pomoci imshow, ve kterem jsou zelene vyznaceny bounding boxy
+    s nadetekovanymi spz.
+
+
